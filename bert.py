@@ -10,7 +10,7 @@ from tqdm import tqdm
 import pandas as pd
 
 
-DATA_DIR = "/csse/users/grh102/Documents/cosc442/cosc442-supervised-systems-master/OLID/"
+DATA_DIR = "/csse/users/grh102/Documents/cosc442/cosc442-supervised-systems/OLID/"
 LABELS = {'NOT': 0, 'OFF': 1}
 TOKENIZER = BertTokenizer.from_pretrained('bert-base-cased')
 
@@ -143,7 +143,26 @@ def train(model, train_data, val_data, learning_rate, epochs):
                 | Val Loss: {total_loss_val / len(val_data): .3f} \
                 | Val Accuracy: {total_acc_val / len(val_data): .3f}')
             
-            
+
+def f1(tp, fp, fn):
+    return tp / (tp + 0.5 * (fp + fn))
+
+
+def print_results(test_labels, preds):
+    """
+    print_results: print results from predicted labels vs gold standard labels
+    
+    Inputs:
+        test_labels: list(any), gold standard labels to test against
+        preds: list(any), labels predicted by the model
+    """
+    results = confusion_matrix(test_labels, preds)
+    tn, fp, fn, tp = results.ravel()
+    print("Accuracy: {:.4f}".format((tn + tp) / len(preds)))
+    print("Confusion matrix: \n", results)
+    print("F1: {:.4f}".format(f1(tp, fp, fn)))
+
+
 def evaluate(model, test_data):
     test = Dataset(test_data)
 
@@ -155,6 +174,9 @@ def evaluate(model, test_data):
     if use_cuda:
         model = model.cuda()
 
+    test_labels = []
+    preds = []
+
     total_acc_test = 0
     with torch.no_grad():
         for test_input, test_label in test_dataloader:
@@ -164,8 +186,13 @@ def evaluate(model, test_data):
             
             output = model(input_id, mask)
             
+            test_labels.append(test_label)
+            preds.append(output.argmax(dim=1))
+            
             acc = (output.argmax(dim=1) == test_label).sum().item()
             total_acc_test += acc
+    
+    print_results(test_labels, preds)
     
     print(f'Test Accuracy: {total_acc_test / len(test_data): .3f}')
 
@@ -189,7 +216,7 @@ def main():
     
     print(len(df_train),len(df_val), len(df_test))
                       
-    EPOCHS = 5
+    EPOCHS = 4
     model = BertClassifier()
     
 #    model = BertClassifier()
