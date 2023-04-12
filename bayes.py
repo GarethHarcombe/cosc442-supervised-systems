@@ -4,11 +4,11 @@ from collections import Counter
 import pandas as pd
 from sklearn.metrics import confusion_matrix
 
-# dataset: https://github.com/idontflow/OLID
+# dataset: Https://Github.Com/Idontflow/Olidhttps://github.com/idontflow/OLID
 # https://paperswithcode.com/paper/predicting-the-type-and-target-of-offensive
 
 
-HOME_DIR = "/home/gareth/Documents/Uni/2023/cosc442/paper2/OLID/"
+HOME_DIR = "/csse/users/grh102/Documents/cosc442/cosc442-supervised-systems-master/OLID/"
 
 
 def train_naive_bayes(D, C):
@@ -121,9 +121,9 @@ def print_results(test_labels, preds):
     """
     results = confusion_matrix(test_labels, preds)
     tn, fp, fn, tp = results.ravel()
-    
+    print("Accuracy: {:.4f}".format((tn + tp) / len(preds)))
     print("Confusion matrix: \n", results)
-    print("F1:", f1(tp, fp, fn))    
+    print("F1: {:.4f}".format(f1(tp, fp, fn)))
 
 
 def evaluate(log_prior, log_likelihood, V, C):
@@ -153,3 +153,5 @@ def evaluate(log_prior, log_likelihood, V, C):
 if __name__ == "__main__":
     log_prior, log_likelihood, V, C = train_bayes()
     evaluate(log_prior, log_likelihood, V, C)
+    
+

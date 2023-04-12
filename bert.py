@@ -10,8 +10,9 @@ from tqdm import tqdm
 import pandas as pd
 
 
-DATA_DIR = "/home/gareth/Documents/Uni/2023/cosc442/paper2/OLID/"
-
+DATA_DIR = "/csse/users/grh102/Documents/cosc442/cosc442-supervised-systems-master/OLID/"
+LABELS = {'NOT': 0, 'OFF': 1}
+TOKENIZER = BertTokenizer.from_pretrained('bert-base-cased')
 
 def test_tokenizer():
     tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
@@ -29,8 +30,8 @@ def test_tokenizer():
 class Dataset(torch.utils.data.Dataset):
 
     def __init__(self, df):
-        self.labels = [labels[label] for label in df['subtask_a']]
-        self.texts = [tokenizer(text, padding='max_length', max_length = 512, truncation=True,
+        self.labels = [LABELS[label] for label in df['subtask_a']]
+        self.texts = [TOKENIZER(text, padding='max_length', max_length = 512, truncation=True,
                                 return_tensors="pt") for text in df['tweet']]
 
     def classes(self):
@@ -170,9 +171,6 @@ def evaluate(model, test_data):
 
 
 def main():
-    tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
-    labels = {'NOT': 0, 'OFF': 1}
-    
     df = pd.read_csv(DATA_DIR + 'olid-training-v1.0.tsv', sep='\t')
     
     test_labels_df = pd.read_csv(DATA_DIR + 'labels-levela.csv', sep='\t', header=None, names=["id_label"])
@@ -193,12 +191,21 @@ def main():
                       
     EPOCHS = 5
     model = BertClassifier()
+    
+#    model = BertClassifier()
+#    model.load_state_dict(torch.load(HOME_DIR + "model.pth"))
+#    model.eval()
+    
     LR = 1e-6
                   
     train(model, df_train, df_val, LR, EPOCHS)
         
     evaluate(model, df_test)
+    
+    torch.save(model.state_dict(), HOME_DIR + "model.pth")
 
 
 if __name__ == "__main__":
     main()
+    
+
