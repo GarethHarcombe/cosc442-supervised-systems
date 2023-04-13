@@ -31,7 +31,7 @@ def train_naive_bayes(D, C):
     log_prior = dict()   # class: P(c)
     log_likelihood = dict()   # (word, class): P(word | class)
     
-    V = set().union(*[set(d.split()) for d, _ in D])  # form a set of all words in docs
+    V = set().union(*[set([w.lower() for w in d.split()]) for d, _ in D])  # form a set of all words in docs
     
     n_doc = len(D)
       
@@ -78,6 +78,7 @@ def test_naive_bayes(test_doc, log_prior, log_likelihood, C, V):
         sum_classes[class_] = log_prior[class_]
         
         for word in test_doc.split():
+            word = word.lower()
             if word in V:
                 sum_classes[class_] += log_likelihood[(word, class_)]
                 
