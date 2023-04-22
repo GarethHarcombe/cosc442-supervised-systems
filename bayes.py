@@ -2,13 +2,13 @@ from math import log
 import itertools
 from collections import Counter
 import pandas as pd
-from sklearn.metrics import confusion_matrix
+from eval import print_results
 
 # dataset: Https://Github.Com/Idontflow/Olidhttps://github.com/idontflow/OLID
 # https://paperswithcode.com/paper/predicting-the-type-and-target-of-offensive
 
 
-HOME_DIR = "/csse/users/grh102/Documents/cosc442/cosc442-supervised-systems-master/OLID/"
+HOME_DIR = "/csse/users/grh102/Documents/cosc442/cosc442-supervised-systems/OLID/"
 
 
 def train_naive_bayes(D, C):
@@ -43,10 +43,10 @@ def train_naive_bayes(D, C):
         
         bigdoc = []
         for doc in c_documents:
-            bigdoc += doc
+            bigdoc += doc.split()
         
         counter = Counter(bigdoc)
-        
+
         denominator = sum([counter[w] + 1 for w in V])
         
         for w in V:
@@ -103,28 +103,11 @@ def train_bayes():
     # convert values into list to pass into training function
     documents = list(train.tweet.values)
     labels = list(train.subtask_a.values)
+#    documents = ["hello yucky", "hello ok"]
+#    labels = ["off", "not"]
     C = list(set(labels))
     
     return train_naive_bayes(list(zip(documents, labels)), C)
-
-
-def f1(tp, fp, fn):
-    return tp / (tp + 0.5 * (fp + fn))
-
-
-def print_results(test_labels, preds):
-    """
-    print_results: print results from predicted labels vs gold standard labels
-    
-    Inputs:
-        test_labels: list(any), gold standard labels to test against
-        preds: list(any), labels predicted by the model
-    """
-    results = confusion_matrix(test_labels, preds)
-    tn, fp, fn, tp = results.ravel()
-    print("Accuracy: {:.4f}".format((tn + tp) / len(preds)))
-    print("Confusion matrix: \n", results)
-    print("F1: {:.4f}".format(f1(tp, fp, fn)))
 
 
 def evaluate(log_prior, log_likelihood, V, C):
@@ -153,6 +136,7 @@ def evaluate(log_prior, log_likelihood, V, C):
 
 if __name__ == "__main__":
     log_prior, log_likelihood, V, C = train_bayes()
+#    print(log_prior, log_likelihood, V, C)
     evaluate(log_prior, log_likelihood, V, C)
     
 

@@ -8,6 +8,8 @@ from torch.optim import Adam
 import numpy as np
 from tqdm import tqdm
 import pandas as pd
+from eval import print_results
+import itertools
 
 
 DATA_DIR = "/csse/users/grh102/Documents/cosc442/cosc442-supervised-systems/OLID/"
@@ -64,7 +66,7 @@ class BertClassifier(nn.Module):
 
         self.bert = BertModel.from_pretrained('bert-base-cased')
         self.dropout = nn.Dropout(dropout)
-        self.linear = nn.Linear(768, 5)
+        self.linear = nn.Linear(768, len(LABELS))
         self.relu = nn.ReLU()
 
     def forward(self, input_id, mask):
@@ -101,7 +103,7 @@ def train(model, train_data, val_data, learning_rate, epochs):
             total_loss_train = 0
 
             for train_input, train_label in tqdm(train_dataloader):
-
+                
                 train_label = train_label.to(device)
                 mask = train_input['attention_mask'].to(device)
                 input_id = train_input['input_ids'].squeeze(1).to(device)
@@ -142,25 +144,6 @@ def train(model, train_data, val_data, learning_rate, epochs):
                 | Train Accuracy: {total_acc_train / len(train_data): .3f} \
                 | Val Loss: {total_loss_val / len(val_data): .3f} \
                 | Val Accuracy: {total_acc_val / len(val_data): .3f}')
-            
-
-def f1(tp, fp, fn):
-    return tp / (tp + 0.5 * (fp + fn))
-
-
-def print_results(test_labels, preds):
-    """
-    print_results: print results from predicted labels vs gold standard labels
-    
-    Inputs:
-        test_labels: list(any), gold standard labels to test against
-        preds: list(any), labels predicted by the model
-    """
-    results = confusion_matrix(test_labels, preds)
-    tn, fp, fn, tp = results.ravel()
-    print("Accuracy: {:.4f}".format((tn + tp) / len(preds)))
-    print("Confusion matrix: \n", results)
-    print("F1: {:.4f}".format(f1(tp, fp, fn)))
 
 
 def evaluate(model, test_data):
@@ -180,17 +163,23 @@ def evaluate(model, test_data):
     total_acc_test = 0
     with torch.no_grad():
         for test_input, test_label in test_dataloader:
+
             test_label = test_label.to(device)
             mask = test_input['attention_mask'].to(device)
             input_id = test_input['input_ids'].squeeze(1).to(device)
             
             output = model(input_id, mask)
-            
+ 
             test_labels.append(test_label)
             preds.append(output.argmax(dim=1))
             
             acc = (output.argmax(dim=1) == test_label).sum().item()
             total_acc_test += acc
+    
+    preds       = [pred.cpu().detach().numpy()  for pred  in preds]
+    preds       = list(itertools.chain.from_iterable(preds))
+    test_labels = [label.cpu().detach().numpy() for label in test_labels]
+    test_labels = list(itertools.chain.from_iterable(test_labels))
     
     print_results(test_labels, preds)
     
@@ -229,7 +218,7 @@ def main():
         
     evaluate(model, df_test)
     
-    torch.save(model.state_dict(), HOME_DIR + "model.pth")
+    torch.save(model.state_dict(), DATA_DIR + "model.pth")
 
 
 if __name__ == "__main__":
