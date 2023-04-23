@@ -3,12 +3,28 @@ import itertools
 from collections import Counter
 import pandas as pd
 from eval import print_results
+import nltk
+import string
+import re
 
 # dataset: Https://Github.Com/Idontflow/Olidhttps://github.com/idontflow/OLID
 # https://paperswithcode.com/paper/predicting-the-type-and-target-of-offensive
 
 
-HOME_DIR = "/csse/users/grh102/Documents/cosc442/cosc442-supervised-systems/OLID/"
+#HOME_DIR = "/csse/users/grh102/Documents/cosc442/cosc442-supervised-systems/OLID/"
+HOME_DIR = "/home/gareth/Documents/Uni/2023/cosc442/paper2/OLID/"
+
+
+emoji_pattern = re.compile("["
+        u"\U0001F600-\U0001F64F"  # emoticons
+        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+        u"\U0001F680-\U0001F6FF"  # transport & map symbols
+        u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+                           "]+", flags=re.UNICODE)
+
+def tokenise(d):
+    text_p = "".join([char for char in d.lower() if char not in string.punctuation])
+    return nltk.word_tokenize(emoji_pattern.sub(r'', text_p))
 
 
 def train_naive_bayes(D, C):
@@ -31,7 +47,7 @@ def train_naive_bayes(D, C):
     log_prior = dict()   # class: P(c)
     log_likelihood = dict()   # (word, class): P(word | class)
     
-    V = set().union(*[set([w.lower() for w in d.split()]) for d, _ in D])  # form a set of all words in docs
+    V = set().union(*[set(tokenise(d)) for d, _ in D])  # form a set of all words in docs
     
     n_doc = len(D)
       
@@ -43,7 +59,7 @@ def train_naive_bayes(D, C):
         
         bigdoc = []
         for doc in c_documents:
-            bigdoc += doc.split()
+            bigdoc += tokenise(doc)
         
         counter = Counter(bigdoc)
 
@@ -77,7 +93,7 @@ def test_naive_bayes(test_doc, log_prior, log_likelihood, C, V):
     for class_ in C:
         sum_classes[class_] = log_prior[class_]
         
-        for word in test_doc.split():
+        for word in tokenise(test_doc):
             word = word.lower()
             if word in V:
                 sum_classes[class_] += log_likelihood[(word, class_)]
@@ -135,6 +151,7 @@ def evaluate(log_prior, log_likelihood, V, C):
     
 
 if __name__ == "__main__":
+    nltk.download('punkt')
     log_prior, log_likelihood, V, C = train_bayes()
 #    print(log_prior, log_likelihood, V, C)
     evaluate(log_prior, log_likelihood, V, C)
